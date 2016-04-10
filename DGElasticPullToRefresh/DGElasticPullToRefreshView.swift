@@ -62,6 +62,9 @@ public class DGElasticPullToRefreshView: UIView {
                 animateBounce()
             } else if newValue == .Loading && actionHandler != nil {
                 actionHandler()
+                if DGElasticPullToRefreshConstants.LoadingViewVisible == false {
+                    self.stopLoading()
+                }
             } else if newValue == .AnimatingToStopped {
                 resetScrollViewContentInset(shouldAddObserverWhenFinished: true, animated: true, completion: { [weak self] () -> () in self?.state = .Stopped })
             } else if newValue == .Stopped {
@@ -81,7 +84,9 @@ public class DGElasticPullToRefreshView: UIView {
         willSet {
             loadingView?.removeFromSuperview()
             if let newValue = newValue {
-                addSubview(newValue)
+                if DGElasticPullToRefreshConstants.LoadingViewVisible {
+                    addSubview(newValue)
+                }
             }
         }
     }
@@ -123,7 +128,7 @@ public class DGElasticPullToRefreshView: UIView {
     init() {
         super.init(frame: CGRect.zero)
         
-        displayLink = CADisplayLink(target: self, selector: Selector("displayLinkTick"))
+        displayLink = CADisplayLink(target: self, selector: #selector(DGElasticPullToRefreshView.displayLinkTick))
         displayLink.addToRunLoop(NSRunLoop.mainRunLoop(), forMode: NSRunLoopCommonModes)
         displayLink.paused = true
         
@@ -141,7 +146,12 @@ public class DGElasticPullToRefreshView: UIView {
         addSubview(r2ControlPointView)
         addSubview(r3ControlPointView)
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: Selector("applicationWillEnterForeground"), name: UIApplicationWillEnterForegroundNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(DGElasticPullToRefreshView.applicationWillEnterForeground), name: UIApplicationWillEnterForegroundNotification, object: nil)
+        
+        if DGElasticPullToRefreshConstants.LoadingViewVisible == false {
+            DGElasticPullToRefreshConstants.LoadingViewSize = 0
+            DGElasticPullToRefreshConstants.LoadingContentInset = 0
+        }
     }
 
     required public init?(coder aDecoder: NSCoder) {
